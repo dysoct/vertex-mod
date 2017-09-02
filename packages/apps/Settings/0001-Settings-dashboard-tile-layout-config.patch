@@ -1,0 +1,387 @@
+From bc3a75daad7232e0f8d9da9a5da5c7c49d8e8588 Mon Sep 17 00:00:00 2001
+From: maxwen <max.weninger@gmail.com>
+Date: Thu, 19 Jan 2017 03:36:53 +0100
+Subject: [PATCH] Settings: dashboard tile layout config
+
+add config to hide summary and use 2 columns
+always show one more column in landscape mode
+
+Change-Id: Ibb537cc254233a36a20da029a0070d2ff2465fc1
+---
+ res/layout/dashboard_tile.xml                      |  6 +--
+ res/layout/suggestion_tile.xml                     |  2 +-
+ res/menu/options_menu.xml                          | 12 ++++-
+ res/values/custom_strings.xml                      |  4 ++
+ res/values/dimens.xml                              |  2 +-
+ src/com/android/settings/SettingsActivity.java     | 42 ++++++++++++++++
+ .../settings/dashboard/DashboardAdapter.java       | 23 ++++++++-
+ .../settings/dashboard/DashboardSummary.java       | 56 +++++++++++++++++++++-
+ 8 files changed, 138 insertions(+), 9 deletions(-)
+
+diff --git a/res/layout/dashboard_tile.xml b/res/layout/dashboard_tile.xml
+index 0e06d18..a265454 100644
+--- a/res/layout/dashboard_tile.xml
++++ b/res/layout/dashboard_tile.xml
+@@ -13,6 +13,7 @@
+      See the License for the specific language governing permissions and
+      limitations under the License.
+ -->
++<!--android:minHeight="@dimen/dashboard_tile_minimum_height"-->
+ 
+ <LinearLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+@@ -21,7 +22,6 @@
+     android:layout_height="wrap_content"
+     android:background="@drawable/selectable_card"
+     android:gravity="center_vertical"
+-    android:minHeight="@dimen/dashboard_tile_minimum_height"
+     android:clickable="true"
+     android:focusable="true">
+ 
+@@ -41,7 +41,7 @@
+         <TextView android:id="@android:id/title"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:singleLine="true"
++            android:maxLines="2"
+             android:textAppearance="@style/TextAppearance.TileTitle"
+             android:ellipsize="marquee"
+             android:fadingEdge="horizontal" />
+@@ -51,7 +51,7 @@
+             android:layout_height="wrap_content"
+             android:textAppearance="@style/TextAppearance.Small"
+             android:textColor="?android:attr/textColorSecondary"
+-            android:maxLines="1"
++            android:maxLines="2"
+             android:ellipsize="end"
+             android:paddingEnd="@dimen/dashboard_tile_image_margin_start" />
+ 
+diff --git a/res/layout/suggestion_tile.xml b/res/layout/suggestion_tile.xml
+index 80de8ff..15831bb 100644
+--- a/res/layout/suggestion_tile.xml
++++ b/res/layout/suggestion_tile.xml
+@@ -62,4 +62,4 @@
+         android:layout_height="wrap_content"
+         android:padding="16dp"/>
+ 
+-</LinearLayout>
+\ No newline at end of file
++</LinearLayout>
+diff --git a/res/menu/options_menu.xml b/res/menu/options_menu.xml
+index f73ce90..2be700d 100644
+--- a/res/menu/options_menu.xml
++++ b/res/menu/options_menu.xml
+@@ -21,4 +21,14 @@
+         android:icon="@*android:drawable/ic_search_api_material"
+         android:showAsAction="collapseActionView|ifRoom"
+         android:actionViewClass="android.widget.SearchView" />
+-</menu>
+\ No newline at end of file
++    <item
++        android:id="@+id/columns_menu"
++        android:title="@string/columns_menu"
++        android:showAsAction="never"
++        android:checkable="true"/>
++    <item
++        android:id="@+id/hide_summary_menu"
++        android:title="@string/hide_summary_menu"
++        android:showAsAction="never"
++        android:checkable="true" />
++</menu>
+diff --git a/res/values/custom_strings.xml b/res/values/custom_strings.xml
+index 915041a..1bffef7 100644
+--- a/res/values/custom_strings.xml
++++ b/res/values/custom_strings.xml
+@@ -146,4 +146,8 @@
+     <string name="sub_activate_failed">Activation failed.</string>
+     <string name="sub_deactivate_success">SIM deactivated.</string>
+     <string name="sub_deactivate_failed">Deactivation failed.</string>
++
++    <!-- Dashboard Tile Layout Config -->
++    <string name="columns_menu">Columns layout</string>
++    <string name="hide_summary_menu">Hide summary</string>
+ </resources>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index f06e1c5..8c1e1a6 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -121,7 +121,7 @@
+ 
+     <!-- Dashboard tile image margin start / end -->
+     <dimen name="dashboard_tile_image_margin_start">16dp</dimen>
+-    <dimen name="dashboard_tile_image_margin_end">32dp</dimen>
++    <dimen name="dashboard_tile_image_margin_end">16dp</dimen>
+ 
+     <!-- SwitchBar margin start / end -->
+     <dimen name="switchbar_margin_start">16dp</dimen>
+diff --git a/src/com/android/settings/SettingsActivity.java b/src/com/android/settings/SettingsActivity.java
+index 2121b69..69a8725 100755
+--- a/src/com/android/settings/SettingsActivity.java
++++ b/src/com/android/settings/SettingsActivity.java
+@@ -241,6 +241,11 @@ public class SettingsActivity extends SettingsDrawerActivity
+     private static final String LTE_4G_FRAGMENT = "com.android.settings.Lte4GEnableSetting";
+     private static final String MOBILENETWORK_FRAGMENT = "com.android.settings.MobileNetworkMain";
+     private static final String SYSTEM_UPDATE = "android.settings.SystemUpdateActivity";
++
++    public static final String KEY_HIDE_SUMMARY = "hide_summary";
++    public static final String KEY_COLUMNS_COUNT = "columns_count";
++    public static final String APP_PREFERENCES_NAME = "app_settings";
++
+     private String mFragmentClass;
+     private String mActivityAction;
+ 
+@@ -393,6 +398,7 @@ public class SettingsActivity extends SettingsDrawerActivity
+ 
+     private SharedPreferences mDevelopmentPreferences;
+     private SharedPreferences.OnSharedPreferenceChangeListener mDevelopmentPreferencesListener;
++    private SharedPreferences mAppPreferences;
+ 
+     private boolean mBatteryPresent = true;
+     private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver() {
+@@ -575,6 +581,8 @@ public class SettingsActivity extends SettingsDrawerActivity
+ 
+         mDevelopmentPreferences = getSharedPreferences(DevelopmentSettings.PREF_FILE,
+                 Context.MODE_PRIVATE);
++        mAppPreferences = getSharedPreferences(APP_PREFERENCES_NAME,
++                Context.MODE_PRIVATE);
+ 
+         // Getting Intent properties can only be done after the super.onCreate(...)
+         final String initialFragmentName = intent.getStringExtra(EXTRA_SHOW_FRAGMENT);
+@@ -1444,4 +1452,38 @@ public class SettingsActivity extends SettingsDrawerActivity
+         }
+         super.onActivityResult(requestCode, resultCode, data);
+     }
++
++    @Override
++    public boolean onOptionsItemSelected(MenuItem item) {
++        switch (item.getItemId()) {
++            case R.id.columns_menu:
++                int columnsCount = mAppPreferences.getInt(KEY_COLUMNS_COUNT, 1);
++                if (columnsCount == 1) {
++                    mAppPreferences.edit().putInt(KEY_COLUMNS_COUNT, 2).commit();
++                } else {
++                    mAppPreferences.edit().putInt(KEY_COLUMNS_COUNT, 1).commit();
++                }
++                return true;
++            case R.id.hide_summary_menu:
++                boolean hideSummary = mAppPreferences.getBoolean(KEY_HIDE_SUMMARY, false);
++                mAppPreferences.edit().putBoolean(KEY_HIDE_SUMMARY, !hideSummary).commit();
++                return true;
++        }
++        return super.onOptionsItemSelected(item);
++    }
++
++    @Override
++    public boolean onPrepareOptionsMenu(Menu menu) {
++        MenuItem columnMenuItem = menu.findItem(R.id.columns_menu);
++        if (columnMenuItem != null) {
++            int columnsCount = mAppPreferences.getInt(KEY_COLUMNS_COUNT, 1);
++            columnMenuItem.setChecked(columnsCount != 1);
++        }
++        MenuItem hideSummaryMenu = menu.findItem(R.id.hide_summary_menu);
++        if (hideSummaryMenu != null) {
++            boolean hideSummary = mAppPreferences.getBoolean(KEY_HIDE_SUMMARY, false);
++            hideSummaryMenu.setChecked(hideSummary);
++        }
++        return true;
++    }
+ }
+diff --git a/src/com/android/settings/dashboard/DashboardAdapter.java b/src/com/android/settings/dashboard/DashboardAdapter.java
+index 24215d6..609cbf0 100755
+--- a/src/com/android/settings/dashboard/DashboardAdapter.java
++++ b/src/com/android/settings/dashboard/DashboardAdapter.java
+@@ -29,6 +29,7 @@ import android.os.Bundle;
+ import android.support.v7.widget.PopupMenu;
+ import android.support.v7.widget.RecyclerView;
+ import android.util.ArrayMap;
++import android.util.Log;
+ import android.util.TypedValue;
+ import android.view.ContextThemeWrapper;
+ import android.view.LayoutInflater;
+@@ -37,6 +38,7 @@ import android.view.View;
+ import android.view.ViewGroup;
+ import android.widget.ImageView;
+ import android.widget.Switch;
++import android.widget.LinearLayout;
+ import android.widget.TextView;
+ 
+ import com.android.internal.logging.MetricsLogger;
+@@ -97,6 +99,9 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.Dash
+     private Condition mExpandedCondition = null;
+     private SuggestionParser mSuggestionParser;
+ 
++    private int mNumColumns = 1;
++    private boolean mHideSummary;
++
+     public DashboardAdapter(Context context, SuggestionParser parser, Bundle savedInstanceState,
+                 List<Condition> conditions) {
+         mContext = context;
+@@ -439,12 +444,16 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.Dash
+     private void onBindTile(DashboardItemHolder holder, Tile tile) {
+         holder.icon.setImageDrawable(mCache.getIcon(tile.icon));
+         holder.title.setText(tile.title);
+-        if (!TextUtils.isEmpty(tile.summary)) {
++        if (!TextUtils.isEmpty(tile.summary) && !mHideSummary) {
+             holder.summary.setText(tile.summary);
+             holder.summary.setVisibility(View.VISIBLE);
+         } else {
+             holder.summary.setVisibility(View.GONE);
+         }
++        int minHeight = mContext.getResources().getDimensionPixelSize(mHideSummary ?
++                R.dimen.dashboard_category_height :
++                R.dimen.dashboard_tile_minimum_height);
++        holder.itemView.setMinimumHeight(minHeight);
+     }
+ 
+     private void onBindCategory(DashboardItemHolder holder, DashboardCategory category) {
+@@ -555,6 +564,18 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.Dash
+         outState.putInt(STATE_SUGGESTION_MODE, mSuggestionMode);
+     }
+ 
++    public boolean isPositionFullSpan(int position) {
++        return mTypes.get(position) != R.layout.dashboard_tile;
++    }
++
++    public void setNumColumns(int numColumns) {
++        mNumColumns = numColumns;
++    }
++
++    public void setHideSummary(boolean hideSummary) {
++        mHideSummary = hideSummary;
++    }
++
+     private static class IconCache {
+ 
+         private final Context mContext;
+diff --git a/src/com/android/settings/dashboard/DashboardSummary.java b/src/com/android/settings/dashboard/DashboardSummary.java
+index 6dfc22e..8525f0d 100755
+--- a/src/com/android/settings/dashboard/DashboardSummary.java
++++ b/src/com/android/settings/dashboard/DashboardSummary.java
+@@ -21,8 +21,11 @@ import android.app.Activity;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
++import android.content.SharedPreferences;
++import android.content.res.Configuration;
+ import android.os.AsyncTask;
+ import android.os.Bundle;
++import android.support.v7.widget.GridLayoutManager;
+ import android.support.v7.widget.LinearLayoutManager;
+ import android.util.Log;
+ import android.view.LayoutInflater;
+@@ -76,11 +79,12 @@ public class DashboardSummary extends InstrumentedFragment
+     private SummaryLoader mSummaryLoader;
+     private ConditionManager mConditionManager;
+     private SuggestionParser mSuggestionParser;
+-    private LinearLayoutManager mLayoutManager;
++    private GridLayoutManager mLayoutManager;
+     private SuggestionsChecks mSuggestionsChecks;
+     private ArrayList<String> mSuggestionsShownLogged;
+     private ArrayList<String> mSuggestionsHiddenLogged;
+ 
++<<<<<<< HEAD
+     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+         @Override
+         public void onReceive(Context context, Intent intent) {
+@@ -92,6 +96,11 @@ public class DashboardSummary extends InstrumentedFragment
+             }
+         }
+     };
++=======
++    private int mNumColumns = 1;
++    private SharedPreferences.OnSharedPreferenceChangeListener mAppPreferencesListener;
++    private SharedPreferences mAppPreferences;
++>>>>>>> 3be4fc9... Settings: dashboard tile layout config
+ 
+     @Override
+     protected int getMetricsCategory() {
+@@ -122,11 +131,23 @@ public class DashboardSummary extends InstrumentedFragment
+         }
+         if (DEBUG_TIMING) Log.d(TAG, "onCreate took " + (System.currentTimeMillis() - startTime)
+                 + " ms");
++
++        mAppPreferencesListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
++            @Override
++            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
++                updateSettings();
++            }
++        };
++        mAppPreferences = context.getSharedPreferences(SettingsActivity.APP_PREFERENCES_NAME,
++                Context.MODE_PRIVATE);
+     }
+ 
+     @Override
+     public void onDestroy() {
+         mSummaryLoader.release();
++        mAppPreferences.unregisterOnSharedPreferenceChangeListener(
++                mAppPreferencesListener);
++        mAppPreferencesListener = null;
+         super.onDestroy();
+     }
+ 
+@@ -134,8 +155,13 @@ public class DashboardSummary extends InstrumentedFragment
+     public void onStart() {
+         long startTime = System.currentTimeMillis();
+         super.onStart();
++<<<<<<< HEAD
+ 
+         mAdapter.getLte4GEnabler().resume();
++=======
++        mAppPreferences.registerOnSharedPreferenceChangeListener(
++                mAppPreferencesListener);
++>>>>>>> 3be4fc9... Settings: dashboard tile layout config
+         ((SettingsDrawerActivity) getActivity()).addCategoryListener(this);
+         mSummaryLoader.setListening(true);
+         for (Condition c : mConditionManager.getConditions()) {
+@@ -220,7 +246,13 @@ public class DashboardSummary extends InstrumentedFragment
+     public void onViewCreated(View view, Bundle bundle) {
+         long startTime = System.currentTimeMillis();
+         mDashboard = (FocusRecyclerView) view.findViewById(R.id.dashboard_container);
+-        mLayoutManager = new LinearLayoutManager(getContext());
++        mLayoutManager = new GridLayoutManager(getContext(), mNumColumns);
++        mLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
++            @Override
++            public int getSpanSize(int position) {
++                return mAdapter.isPositionFullSpan(position) ? mNumColumns : 1;
++            }
++        });
+         mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+         if (bundle != null) {
+             int scrollPosition = bundle.getInt(EXTRA_SCROLL_POSITION);
+@@ -235,6 +267,7 @@ public class DashboardSummary extends InstrumentedFragment
+         mDashboard.setAdapter(mAdapter);
+         mSummaryLoader.setAdapter(mAdapter);
+         ConditionAdapterUtils.addDismiss(mDashboard);
++        updateSettings();
+         if (DEBUG_TIMING) Log.d(TAG, "onViewCreated took "
+                 + (System.currentTimeMillis() - startTime) + " ms");
+         rebuildUI();
+@@ -265,6 +298,25 @@ public class DashboardSummary extends InstrumentedFragment
+         mAdapter.setConditions(mConditionManager.getConditions());
+     }
+ 
++    private void updateSettings() {
++        boolean hideSummary = mAppPreferences.getBoolean(SettingsActivity.KEY_HIDE_SUMMARY, false);
++        int numColumns = mAppPreferences.getInt(SettingsActivity.KEY_COLUMNS_COUNT, 1);
++        boolean isLandscape = getResources().getConfiguration().orientation
++                == Configuration.ORIENTATION_LANDSCAPE;
++        // always show one column more in landscape
++        mNumColumns = isLandscape ? numColumns + 1 : numColumns;
++        mLayoutManager.setSpanCount(mNumColumns);
++        mAdapter.setNumColumns(mNumColumns);
++        mAdapter.setHideSummary(hideSummary);
++        mAdapter.notifyDataSetChanged();
++    }
++
++    @Override
++    public void onConfigurationChanged(Configuration newConfig) {
++        super.onConfigurationChanged(newConfig);
++        updateSettings();
++    }
++
+     private class SuggestionLoader extends AsyncTask<Void, Void, List<Tile>> {
+ 
+         @Override
+-- 
+2.7.4
+
