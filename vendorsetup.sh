@@ -20,5 +20,4 @@
 # In particular, you can add lunch options with the add_lunch_combo
 # function: add_lunch_combo generic-eng
 
-sh vendor/vertex-mod/uninstall.sh
 sh vendor/vertex-mod/install.sh
