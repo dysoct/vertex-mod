@@ -1,0 +1,62 @@
+From d96b4cf0e4f392e285a82eedfae17ba2711b36be Mon Sep 17 00:00:00 2001
+From: OrdenKrieger <OrdenKriegerEDR@googlemail.com>
+Date: Fri, 1 Sep 2017 06:00:35 +0200
+Subject: [PATCH 2/2] Fix dashboard theme on column change
+
+Change-Id: I872f44b73751b53a476a5407129d38edb56123a2
+---
+ res/layout/dashboard.xml                  | 1 +
+ res/layout/dashboard_category.xml         | 2 +-
+ res/layout/dashboard_container_header.xml | 2 +-
+ res/layout/dashboard_tile.xml             | 2 +-
+ 4 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/res/layout/dashboard.xml b/res/layout/dashboard.xml
+index 73a7255..a1f1d9f 100644
+--- a/res/layout/dashboard.xml
++++ b/res/layout/dashboard.xml
+@@ -26,4 +26,5 @@
+     android:paddingEnd="@dimen/dashboard_padding_end"
+     android:paddingTop="@dimen/dashboard_padding_top"
+     android:paddingBottom="@dimen/dashboard_padding_bottom"
++    android:background="?android:attr/colorBackground"
+     android:scrollbars="vertical"/>
+diff --git a/res/layout/dashboard_category.xml b/res/layout/dashboard_category.xml
+index 86dac35..dcda7b5 100644
+--- a/res/layout/dashboard_category.xml
++++ b/res/layout/dashboard_category.xml
+@@ -20,7 +20,7 @@
+     android:layout_height="@dimen/dashboard_category_height"
+     android:orientation="vertical"
+     android:paddingBottom="@dimen/dashboard_category_padding_bottom"
+-    android:background="@drawable/dashboard_category_title_bg">
++    android:background="?android:attr/colorBackground">
+ 
+     <TextView android:id="@android:id/title"
+         android:layout_width="match_parent"
+diff --git a/res/layout/dashboard_container_header.xml b/res/layout/dashboard_container_header.xml
+index a9d78ed..b2f46ab 100644
+--- a/res/layout/dashboard_container_header.xml
++++ b/res/layout/dashboard_container_header.xml
+@@ -22,4 +22,4 @@
+     android:layout_height="wrap_content"
+     android:layout_marginStart="@dimen/dashboard_header_margin_start"
+     android:layout_marginEnd="@dimen/dashboard_header_margin_end"
+-    android:background="?android:attr/colorPrimary"/>
++    android:background="?android:attr/colorBackground"/>
+diff --git a/res/layout/dashboard_tile.xml b/res/layout/dashboard_tile.xml
+index a265454..57bd271 100644
+--- a/res/layout/dashboard_tile.xml
++++ b/res/layout/dashboard_tile.xml
+@@ -20,7 +20,7 @@
+     android:id="@+id/dashboard_tile"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+-    android:background="@drawable/selectable_card"
++    android:background="?android:attr/colorBackground"
+     android:gravity="center_vertical"
+     android:clickable="true"
+     android:focusable="true">
+-- 
+2.7.4
+

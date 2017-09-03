@@ -1,7 +1,7 @@
-From bc3a75daad7232e0f8d9da9a5da5c7c49d8e8588 Mon Sep 17 00:00:00 2001
+From d29b2fcc8b0ddcfb8310448ee86a9ab9d0e4e80c Mon Sep 17 00:00:00 2001
 From: maxwen <max.weninger@gmail.com>
 Date: Thu, 19 Jan 2017 03:36:53 +0100
-Subject: [PATCH] Settings: dashboard tile layout config
+Subject: [PATCH 1/2] Settings: dashboard tile layout config
 
 add config to hide summary and use 2 columns
 always show one more column in landscape mode
@@ -10,13 +10,13 @@ Change-Id: Ibb537cc254233a36a20da029a0070d2ff2465fc1
 ---
  res/layout/dashboard_tile.xml                      |  6 +--
  res/layout/suggestion_tile.xml                     |  2 +-
- res/menu/options_menu.xml                          | 12 ++++-
+ res/menu/options_menu.xml                          | 12 +++++-
  res/values/custom_strings.xml                      |  4 ++
  res/values/dimens.xml                              |  2 +-
- src/com/android/settings/SettingsActivity.java     | 42 ++++++++++++++++
- .../settings/dashboard/DashboardAdapter.java       | 23 ++++++++-
- .../settings/dashboard/DashboardSummary.java       | 56 +++++++++++++++++++++-
- 8 files changed, 138 insertions(+), 9 deletions(-)
+ src/com/android/settings/SettingsActivity.java     | 42 ++++++++++++++++++
+ .../settings/dashboard/DashboardAdapter.java       | 23 +++++++++-
+ .../settings/dashboard/DashboardSummary.java       | 50 +++++++++++++++++++++-
+ 8 files changed, 132 insertions(+), 9 deletions(-)
 
 diff --git a/res/layout/dashboard_tile.xml b/res/layout/dashboard_tile.xml
 index 0e06d18..a265454 100644
@@ -254,7 +254,7 @@ index 24215d6..609cbf0 100755
  
          private final Context mContext;
 diff --git a/src/com/android/settings/dashboard/DashboardSummary.java b/src/com/android/settings/dashboard/DashboardSummary.java
-index 6dfc22e..8525f0d 100755
+index 6dfc22e..62bb7d6 100755
 --- a/src/com/android/settings/dashboard/DashboardSummary.java
 +++ b/src/com/android/settings/dashboard/DashboardSummary.java
 @@ -21,8 +21,11 @@ import android.app.Activity;
@@ -269,7 +269,7 @@ index 6dfc22e..8525f0d 100755
  import android.support.v7.widget.LinearLayoutManager;
  import android.util.Log;
  import android.view.LayoutInflater;
-@@ -76,11 +79,12 @@ public class DashboardSummary extends InstrumentedFragment
+@@ -76,7 +79,7 @@ public class DashboardSummary extends InstrumentedFragment
      private SummaryLoader mSummaryLoader;
      private ConditionManager mConditionManager;
      private SuggestionParser mSuggestionParser;
@@ -278,24 +278,17 @@ index 6dfc22e..8525f0d 100755
      private SuggestionsChecks mSuggestionsChecks;
      private ArrayList<String> mSuggestionsShownLogged;
      private ArrayList<String> mSuggestionsHiddenLogged;
- 
-+<<<<<<< HEAD
-     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-         @Override
-         public void onReceive(Context context, Intent intent) {
-@@ -92,6 +96,11 @@ public class DashboardSummary extends InstrumentedFragment
+@@ -92,6 +95,9 @@ public class DashboardSummary extends InstrumentedFragment
              }
          }
      };
-+=======
 +    private int mNumColumns = 1;
 +    private SharedPreferences.OnSharedPreferenceChangeListener mAppPreferencesListener;
 +    private SharedPreferences mAppPreferences;
-+>>>>>>> 3be4fc9... Settings: dashboard tile layout config
  
      @Override
      protected int getMetricsCategory() {
-@@ -122,11 +131,23 @@ public class DashboardSummary extends InstrumentedFragment
+@@ -122,11 +128,23 @@ public class DashboardSummary extends InstrumentedFragment
          }
          if (DEBUG_TIMING) Log.d(TAG, "onCreate took " + (System.currentTimeMillis() - startTime)
                  + " ms");
@@ -319,21 +312,16 @@ index 6dfc22e..8525f0d 100755
          super.onDestroy();
      }
  
-@@ -134,8 +155,13 @@ public class DashboardSummary extends InstrumentedFragment
-     public void onStart() {
-         long startTime = System.currentTimeMillis();
+@@ -136,6 +154,8 @@ public class DashboardSummary extends InstrumentedFragment
          super.onStart();
-+<<<<<<< HEAD
  
          mAdapter.getLte4GEnabler().resume();
-+=======
 +        mAppPreferences.registerOnSharedPreferenceChangeListener(
 +                mAppPreferencesListener);
-+>>>>>>> 3be4fc9... Settings: dashboard tile layout config
          ((SettingsDrawerActivity) getActivity()).addCategoryListener(this);
          mSummaryLoader.setListening(true);
          for (Condition c : mConditionManager.getConditions()) {
-@@ -220,7 +246,13 @@ public class DashboardSummary extends InstrumentedFragment
+@@ -220,7 +240,13 @@ public class DashboardSummary extends InstrumentedFragment
      public void onViewCreated(View view, Bundle bundle) {
          long startTime = System.currentTimeMillis();
          mDashboard = (FocusRecyclerView) view.findViewById(R.id.dashboard_container);
@@ -348,7 +336,7 @@ index 6dfc22e..8525f0d 100755
          mLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
          if (bundle != null) {
              int scrollPosition = bundle.getInt(EXTRA_SCROLL_POSITION);
-@@ -235,6 +267,7 @@ public class DashboardSummary extends InstrumentedFragment
+@@ -235,6 +261,7 @@ public class DashboardSummary extends InstrumentedFragment
          mDashboard.setAdapter(mAdapter);
          mSummaryLoader.setAdapter(mAdapter);
          ConditionAdapterUtils.addDismiss(mDashboard);
@@ -356,7 +344,7 @@ index 6dfc22e..8525f0d 100755
          if (DEBUG_TIMING) Log.d(TAG, "onViewCreated took "
                  + (System.currentTimeMillis() - startTime) + " ms");
          rebuildUI();
-@@ -265,6 +298,25 @@ public class DashboardSummary extends InstrumentedFragment
+@@ -265,6 +292,25 @@ public class DashboardSummary extends InstrumentedFragment
          mAdapter.setConditions(mConditionManager.getConditions());
      }
  
