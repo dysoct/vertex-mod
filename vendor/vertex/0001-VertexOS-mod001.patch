@@ -1,0 +1,41 @@
+From 17b2525af744844d4c24796857523c9ca9cea39e Mon Sep 17 00:00:00 2001
+From: dysoct <dysoct@gmail.com>
+Date: Mon, 4 Sep 2017 08:09:52 +0000
+Subject: [PATCH] VertexOS-mod001
+
+---
+ config/common.mk | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 1048a78..bd07033 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -2,12 +2,12 @@
+ # VertexOS Version
+ ####################
+
+-PRODUCT_VERSION = v3.5
++PRODUCT_VERSION = v3.5-mod001
+ CODE_NAME = Carbide
+
+ # Unofficial by default unless defined
+ ifndef VERTEX_BUILDTYPE
+-       VERTEX_BUILDTYPE := UNOFFICIAL
++       VERTEX_BUILDTYPE := PVEX
+ endif
+
+ # Version Shown in Settings -> About
+@@ -242,8 +242,8 @@ endif
+ #endif
+
+ #OTA
+- PRODUCT_PACKAGES += \
+-         vertexOTA
++# PRODUCT_PACKAGES += \
++#         vertexOTA
+
+ # Azaidi Launcher3
+ PRODUCT_PACKAGES += \
+--
+2.7.4
